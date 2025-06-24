@@ -1,5 +1,3 @@
-// Enhanced ProjectPage with image zoom, optimized loading, accessibility, and MediaSlider component.
-
 "use client";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 import { format } from "date-fns";
@@ -9,9 +7,9 @@ import { FaGithub } from "react-icons/fa6";
 import { IoIosArrowBack } from "react-icons/io";
 import { MdOpenInNew } from "react-icons/md";
 import parse from "html-react-parser";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import YouTube from "react-youtube";
-import MediumZoom from "react-medium-image-zoom";
+import { Controlled } from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
 
 type Project = {
@@ -38,6 +36,7 @@ type MediaSliderProps = {
 const MediaSlider = ({ mediaItems }: MediaSliderProps) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isZoomed, setIsZoomed] = useState(false);
 
   const getYouTubeId = (url: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -48,15 +47,15 @@ const MediaSlider = ({ mediaItems }: MediaSliderProps) => {
   const isYouTubeUrl = (url: string) =>
     url.includes("youtube.com") || url.includes("youtu.be");
 
-  const nextSlide = () => {
+  const nextSlide = useCallback(() => {
     setIsVideoPlaying(false);
     setCurrentSlide((prev) => (prev === mediaItems.length - 1 ? 0 : prev + 1));
-  };
+  }, [mediaItems.length]);
 
-  const prevSlide = () => {
+  const prevSlide = useCallback(() => {
     setIsVideoPlaying(false);
     setCurrentSlide((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1));
-  };
+  }, [mediaItems.length]);
 
   const goToSlide = (index: number) => {
     setIsVideoPlaying(false);
@@ -75,6 +74,22 @@ const MediaSlider = ({ mediaItems }: MediaSliderProps) => {
 
   const currentMedia = mediaItems[currentSlide] || "";
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!isZoomed) return;
+      if (e.key === "ArrowRight") nextSlide();
+      if (e.key === "ArrowLeft") prevSlide();
+    };
+
+    if (isZoomed) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isZoomed, nextSlide, prevSlide]);
+
   return (
     <div className="relative w-full h-full aspect-video rounded-lg overflow-hidden">
       {isYouTubeUrl(currentMedia) ? (
@@ -86,7 +101,10 @@ const MediaSlider = ({ mediaItems }: MediaSliderProps) => {
           iframeClassName="w-full h-full"
         />
       ) : (
-        <MediumZoom>
+        <Controlled
+          isZoomed={isZoomed}
+          onZoomChange={(zoom: boolean) => setIsZoomed(zoom)}
+        >
           <Image
             src={currentMedia.trim() || "/fallback.jpg"}
             width={1080}
@@ -95,7 +113,7 @@ const MediaSlider = ({ mediaItems }: MediaSliderProps) => {
             className="w-full h-full object-cover"
             priority={currentSlide === 0}
           />
-        </MediumZoom>
+        </Controlled>
       )}
 
       {mediaItems.length > 1 && (

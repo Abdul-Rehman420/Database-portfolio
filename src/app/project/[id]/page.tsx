@@ -4,12 +4,16 @@ import ProjectPage from "./projectPage";
 
 async function getProject(id: string) {
   try {
-    const response = await fetch(`${URL}/project/${id}`, { cache: "no-store" }); // Ensure fresh data
-    if (!response.ok) {
-      throw new Error("Failed to fetch data");
-    }
+    const response = await fetch(`${URL}/project`, {
+      cache: "no-store",
+    });
+
     const data = await response.json();
-    return data.project; // Accessing the 'project' field directly
+
+    // Find the project by _id
+    const project = data.project.find((p: any) => p._id === id);
+
+    return project || null;
   } catch (error) {
     console.error("Error fetching project data:", error);
     return null;
@@ -37,12 +41,7 @@ export async function generateMetadata({
     openGraph: {
       title,
       description,
-      images: [
-        {
-          url: image,
-          alt: title,
-        },
-      ],
+      images: [{ url: image, alt: title }],
       siteName: "Md Ranju Portfolio",
       type: "website",
       url: `https://mdranju.xyz/project/${id}`,
@@ -50,12 +49,7 @@ export async function generateMetadata({
     twitter: {
       title,
       description,
-      images: [
-        {
-          url: image,
-          alt: title,
-        },
-      ],
+      images: [{ url: image, alt: title }],
       card: "summary_large_image",
       site: "@muhammad_ranju",
     },
@@ -66,14 +60,14 @@ const Project = async ({ params }: { params: { id: string } }) => {
   const project = await getProject(params.id);
 
   if (!project) {
-    return <div>Project not found.</div>;
+    return (
+      <div className="text-center mt-28 text-2xl font-semibold text-red-500">
+        Project not found.
+      </div>
+    );
   }
 
-  return (
-    <>
-      <ProjectPage project={project} />
-    </>
-  );
+  return <ProjectPage project={project} />;
 };
 
 export default Project;

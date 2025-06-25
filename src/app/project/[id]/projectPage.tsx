@@ -1,4 +1,5 @@
 "use client";
+
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -7,7 +8,7 @@ import { FaGithub } from "react-icons/fa6";
 import { IoIosArrowBack } from "react-icons/io";
 import { MdOpenInNew } from "react-icons/md";
 import parse from "html-react-parser";
-import { useState, useCallback, useEffect } from "react";
+import { useState } from "react";
 import YouTube from "react-youtube";
 import { Controlled } from "react-medium-image-zoom";
 import "react-medium-image-zoom/dist/styles.css";
@@ -34,9 +35,12 @@ type MediaSliderProps = {
 };
 
 const MediaSlider = ({ mediaItems }: MediaSliderProps) => {
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(0);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
   const [isZoomed, setIsZoomed] = useState(false);
+
+  const isYouTubeUrl = (url: string) =>
+    url.includes("youtube.com") || url.includes("youtu.be");
 
   const getYouTubeId = (url: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -44,111 +48,99 @@ const MediaSlider = ({ mediaItems }: MediaSliderProps) => {
     return match && match[2].length === 11 ? match[2] : null;
   };
 
-  const isYouTubeUrl = (url: string) =>
-    url.includes("youtube.com") || url.includes("youtu.be");
-
-  const nextSlide = useCallback(() => {
-    setIsVideoPlaying(false);
-    setCurrentSlide((prev) => (prev === mediaItems.length - 1 ? 0 : prev + 1));
-  }, [mediaItems.length]);
-
-  const prevSlide = useCallback(() => {
-    setIsVideoPlaying(false);
-    setCurrentSlide((prev) => (prev === 0 ? mediaItems.length - 1 : prev - 1));
-  }, [mediaItems.length]);
-
-  const goToSlide = (index: number) => {
-    setIsVideoPlaying(false);
-    setCurrentSlide(index);
-  };
-
-  const onVideoPlay = () => {
-    setIsVideoPlaying(true);
-  };
+  const currentMedia = mediaItems[activeIndex];
 
   const youtubeOpts = {
     width: "100%",
     height: "100%",
-    playerVars: { autoplay: isVideoPlaying ? 1 : 0, modestbranding: 1, rel: 0 },
+    playerVars: {
+      autoplay: isVideoPlaying ? 1 : 0,
+      modestbranding: 1,
+      rel: 0,
+    },
   };
 
-  const currentMedia = mediaItems[currentSlide] || "";
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (!isZoomed) return;
-      if (e.key === "ArrowRight") nextSlide();
-      if (e.key === "ArrowLeft") prevSlide();
-    };
-
-    if (isZoomed) {
-      window.addEventListener("keydown", handleKeyDown);
-    }
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isZoomed, nextSlide, prevSlide]);
-
   return (
-    <div className="relative w-full h-full aspect-video rounded-lg overflow-hidden">
-      {isYouTubeUrl(currentMedia) ? (
-        <YouTube
-          videoId={getYouTubeId(currentMedia) || undefined}
-          opts={youtubeOpts}
-          onPlay={onVideoPlay}
-          className="w-full h-full"
-          iframeClassName="w-full h-full"
-        />
-      ) : (
-        <Controlled
-          isZoomed={isZoomed}
-          onZoomChange={(zoom: boolean) => setIsZoomed(zoom)}
-        >
-          <Image
-            src={currentMedia.trim() || "/fallback.jpg"}
-            width={1080}
-            height={720}
-            alt={`Project image ${currentSlide + 1}`}
-            className="w-full h-full object-cover"
-            priority={currentSlide === 0}
+    <div className="w-full">
+      {/* Main Media */}
+      <div className="aspect-video w-full rounded-lg overflow-hidden mb-4 relative">
+        {isYouTubeUrl(currentMedia) ? (
+          <YouTube
+            videoId={getYouTubeId(currentMedia) || ""}
+            opts={youtubeOpts}
+            onPlay={() => setIsVideoPlaying(true)}
+            className="w-full h-full"
+            iframeClassName="w-full h-full"
           />
-        </Controlled>
-      )}
-
-      {mediaItems.length > 1 && (
-        <>
-          <button
-            onClick={prevSlide}
-            className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 z-10"
-            aria-label="Previous slide"
+        ) : (
+          <Controlled
+            isZoomed={isZoomed}
+            onZoomChange={(zoom: boolean) => setIsZoomed(zoom)}
           >
-            <IoIosArrowBack />
-          </button>
-          <button
-            onClick={nextSlide}
-            className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/30 text-white p-2 rounded-full hover:bg-black/50 rotate-180 z-10"
-            aria-label="Next slide"
-          >
-            <IoIosArrowBack />
-          </button>
+            <Image
+              src={currentMedia || "/fallback.jpg"}
+              width={1280}
+              height={720}
+              alt="Slide"
+              className="w-full h-full object-cover"
+              priority
+            />
+          </Controlled>
+        )}
+      </div>
 
-          <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
-            {mediaItems.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => goToSlide(index)}
-                className={`w-3 h-3 rounded-full transition-all ${
-                  currentSlide === index
-                    ? "bg-white w-6"
-                    : "bg-white/50 hover:bg-white/70"
-                }`}
-                aria-label={`Go to slide ${index + 1}`}
+      {/* Thumbnail Strip */}
+      <div className="flex gap-2 overflow-x-auto mt-4 pb-2">
+        {mediaItems.map((item, index) => (
+          <div
+            key={index}
+            onClick={() => {
+              setActiveIndex(index);
+              setIsVideoPlaying(false);
+            }}
+            className={`cursor-pointer border-2 rounded-md overflow-hidden ${
+              activeIndex === index
+                ? "border-indigo-500"
+                : "border-transparent hover:border-gray-300"
+            }`}
+          >
+            {isYouTubeUrl(item) ? (
+              <div className="relative w-28 h-16 bg-black">
+                <Image
+                  src={`https://img.youtube.com/vi/${getYouTubeId(item)}/hqdefault.jpg`}
+                  alt={`Thumbnail ${index + 1}`}
+                  fill
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="white"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    className="w-8 h-8 opacity-80"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M14.752 11.168l-4.586-2.65A1 1 0 009 9.382v5.236a1 1 0 001.166.984l4.586-2.65a1 1 0 000-1.732z"
+                    />
+                  </svg>
+                </div>
+              </div>
+            ) : (
+              <Image
+                src={item}
+                alt={`Thumbnail ${index + 1}`}
+                width={112}
+                height={64}
+                className="w-28 h-16 object-cover"
               />
-            ))}
+            )}
           </div>
-        </>
-      )}
+        ))}
+      </div>
     </div>
   );
 };
@@ -206,7 +198,9 @@ const ProjectPage = ({ project }: { project: Project }) => {
           />
           <div>
             <p>{project.author}</p>
-            <span className="text-xs">Added At: {format(new Date(project.createdAt), "dd/MM/yyyy")}</span>
+            <span className="text-xs">
+              Added At: {format(new Date(project.createdAt), "dd/MM/yyyy")}
+            </span>
           </div>
         </div>
 

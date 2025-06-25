@@ -171,11 +171,11 @@ const ProjectPage = ({ project }: { project: Project }) => {
         <h2 className="lg:text-3xl text-xl font-bold mt-5">{project.title}</h2>
         <p className="mt-2 lg:max-w-5xl lg:text-base text-sm">{project.details}</p>
 
-        {project.longDetails && (
+        {/* {project.longDetails && (
           <div className="mt-4 prose dark:prose-invert max-w-none">
             {parse(project.longDetails)}
           </div>
-        )}
+        )} */}
 
         {project.tags.length > 0 && (
           <div className="flex mt-4 flex-wrap items-center space-x-2">
@@ -216,7 +216,7 @@ const ProjectPage = ({ project }: { project: Project }) => {
             </HoverBorderGradient>
           </a>
 
-          {project.backendSourceCode && (
+          {/* {project.backendSourceCode && (
             <a href={project.backendSourceCode} target="_blank" rel="noopener noreferrer">
               <HoverBorderGradient
                 containerClassName="rounded-lg"
@@ -227,9 +227,9 @@ const ProjectPage = ({ project }: { project: Project }) => {
                 <span>Backend</span>
               </HoverBorderGradient>
             </a>
-          )}
+          )} */}
 
-          {project.liveLink && (
+          {/* {project.liveLink && (
             <a href={project.liveLink} target="_blank" rel="noopener noreferrer">
               <HoverBorderGradient
                 containerClassName="rounded-lg"
@@ -240,7 +240,7 @@ const ProjectPage = ({ project }: { project: Project }) => {
                 <span>Live Demo</span>
               </HoverBorderGradient>
             </a>
-          )}
+          )} */}
         </div>
       </div>
     </div>

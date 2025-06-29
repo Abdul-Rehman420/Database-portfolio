@@ -10,7 +10,7 @@ import {
 } from "react-icons/fa6";
 import { RiJavascriptFill } from "react-icons/ri";
 import { SiExpress, SiNextdotjs, SiTailwindcss } from "react-icons/si";
-import heroImage from "../../public/hero-image.jpeg";
+import heroImage from "../../public/hero-image.jpg";
 
 import { FlipWords } from "@/components/ui/flip-words";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
